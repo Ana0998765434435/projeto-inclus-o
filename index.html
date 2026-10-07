@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark" data-font="normal">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Soluções Inclusivas - Hackathon de Acessibilidade</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        accessibility: {
+                            yellow: '#FFD700',
+                            darkBg: '#0F172A',
+                            darkCard: '#1E293B',
+                            darkBorder: '#334155',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome para ícones acessíveis -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0F172A;
+            --card-bg: #1E293B;
+            --text-color: #F8FAFC;
+            --border-color: #334155;
+            --accent-color: #38BDF8;
+            --accent-text: #0F172A;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-color: #0F172A;
+            --border-color: #CBD5E1;
+            --accent-color: #0284C7;
+            --accent-text: #FFFFFF;
+        }
+
+        [data-theme="high-contrast"] {
+            --bg-color: #000000;
+            --card-bg: #000000;
+            --text-color: #FFFF00;
+            --border-color: #FFFF00;
+            --accent-color: #FFFF00;
+            --accent-text: #000000;
+        }
+
+        [data-font="normal"] { font-size: 100%; }
+        [data-font="large"] { font-size: 115%; }
+        [data-font="xlarge"] { font-size: 130%; }
+
+        /* Filtros de Daltonismo Simulados via CSS */
+        .simulate-protanopia { filter: url('#protanopia-filter'); }
+        .simulate-deuteranopia { filter: url('#deuteranopia-filter'); }
+        .simulate-tritanopia { filter: url('#tritanopia-filter'); }
+        .simulate-blur { filter: blur(3px); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .acc-card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+        }
+
+        a:focus, button:focus, input:focus, select:focus, textarea:focus {
+            outline: 4px solid #FFD700 !important;
+            outline-offset: 4px !important;
+            box-shadow: 0 0 0 6px #38BDF8 !important;
+        }
+
+        .sr-only-custom {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- SVG Filters for Color Blindness Simulation -->
+    <svg style="display:none">
+        <defs>
+            <filter id="protanopia-filter">
+                <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0  0.558, 0.442, 0, 0, 0  0, 0.242, 0.758, 0, 0  0, 0, 0, 1, 0"/>
+            </filter>
+            <filter id="deuteranopia-filter">
+                <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0  0.7, 0.3, 0, 0, 0  0, 0.3, 0.7, 0, 0  0, 0, 0, 1, 0"/>
+            </filter>
+            <filter id="tritanopia-filter">
+                <feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0  0, 0.433, 0.567, 0, 0  0, 0.475, 0.525, 0, 0  0, 0, 0, 1, 0"/>
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Header & Universal Accessibility Controls -->
+    <header role="banner" class="w-full border-b border-[var(--border-color)] bg-[var(--card-bg)] py-3 px-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl" aria-hidden="true">🌐</span>
+                <div>
+                    <h1 class="text-lg font-black tracking-wide">Painel de Soluções Inclusivas</h1>
+                    <p class="text-xs opacity-80">Hackathon de Acessibilidade &bull; Mitigando Barreiras</p>
+                </div>
+            </div>
+            
+            <!-- Quick Accessibility Toolbars -->
+            <div class="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Ferramentas globais de acessibilidade">
+                <button onclick="toggleSpeech()" id="btn-speech" aria-pressed="false" class="px-3 py-2 rounded-lg font-bold border border-[var(--border-color)] bg-[var(--bg-color)] hover:opacity-80 flex items-center gap-2 text-xs">
+                    <i class="fa-solid fa-volume-high" aria-hidden="true"></i> <span id="speech-status">Voz: Desligada</span>
+                </button>
+                
+                <div class="flex items-center border border-[var(--border-color)] rounded-lg overflow-hidden text-xs">
+                    <button onclick="changeFontSize('normal')" class="px-2.5 py-2 font-bold hover:bg-sky-600 hover:text-white transition" aria-label="Fonte normal">A</button>
+                    <button onclick="changeFontSize('large')" class="px-2.5 py-2 font-bold hover:bg-sky-600 hover:text-white transition" aria-label="Fonte grande">A+</button>
+                    <button onclick="changeFontSize('xlarge')" class="px-2.5 py-2 font-bold hover:bg-sky-600 hover:text-white transition" aria-label="Fonte muito grande">A++</button>
+                </div>
+
+                <button onclick="toggleTheme()" id="btn-theme" class="px-3 py-2 rounded-lg font-bold border border-[var(--border-color)] bg-[var(--bg-color)] hover:opacity-80 flex items-center gap-2 text-xs" aria-label="Alternar Contraste">
+                    <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> <span id="theme-name">Contraste</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navegação por Abas Principais -->
+    <nav aria-label="Navegação principal da aplicação" class="bg-[var(--card-bg)] border-b border-[var(--border-color)] px-4 py-2">
+        <div class="max-w-7xl mx-auto flex flex-wrap gap-2">
+            <button onclick="switchTab('missao')" id="tab-missao" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-sky-500 text-slate-900 transition flex items-center gap-2">
+                <i class="fa-solid fa-bullseye"></i> 1. Desafio & Metodologia
+            </button>
+            <button onclick="switchTab('simuladores')" id="tab-simuladores" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-[var(--bg-color)] border border-[var(--border-color)] hover:bg-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-eye-low-vision"></i> 2. Simuladores de Barreiras
+            </button>
+            <button onclick="switchTab('cadastro')" id="tab-cadastro" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-[var(--bg-color)] border border-[var(--border-color)] hover:bg-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-user-check"></i> 3. Cadastro Multi-Acessível
+            </button>
+            <button onclick="switchTab('kanban')" id="tab-kanban" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-[var(--bg-color)] border border-[var(--border-color)] hover:bg-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-kanban"></i> 4. Gestão Ágil (Kanban)
+            </button>
+        </div>
+    </nav>
+
+    <!-- Live Region para Leitores de Tela -->
+    <div id="sr-announcer" class="sr-only-custom" aria-live="assertive" aria-atomic="true"></div>
+
+    <!-- Conteúdo Principal Dinâmico -->
+    <main role="main" id="main-container" class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 my-4">
+        
+        <!-- SEÇÃO 1: CONTEXTO DA MISSÃO & METODOLOGIA -->
+        <section id="section-missao" class="space-y-6">
+            <div class="acc-card p-6 md:p-8 rounded-2xl shadow-xl">
+                <div class="max-w-3xl">
+                    <span class="px-3 py-1 bg-sky-500/20 text-sky-400 rounded-full text-xs font-bold uppercase tracking-wider">Contexto da Missão</span>
+                    <h2 class="text-3xl font-black mt-2 mb-4">Inovação Tecnológica com Empatia</h2>
+                    <p class="text-base leading-relaxed opacity-90 mb-4">
+                        Após a experiência enriquecedora com os palestrantes sobre inclusão e acessibilidade, o desafio prático exige a aplicação de <strong>metodologias ágeis (Scrum/Kanban)</strong>, <strong>gestão de tempo (Pomodoro/Timeboxing)</strong> e <strong>tecnologias assistivas</strong> para mitigar barreiras reais para pessoas com deficiência auditiva, visual, baixa visão ou daltonismo.
+                    </p>
+                    <button onclick="speakText('Contexto da missão carregado. Este painel integra metodologias ágeis, simuladores de deficiências, tela de cadastro acessível e Kanban para gestão do hackathon.')" class="px-4 py-2 bg-sky-500 text-slate-900 rounded-xl font-bold text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-headphones"></i> Ouvir Resumo da Missão
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pilares do Projeto -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="acc-card p-6 rounded-2xl shadow-lg">
+                    <div class="text-3xl text-sky-400 mb-3"><i class="fa-solid fa-arrows-split-up-and-left"></i></div>
+                    <h3 class="text-xl font-bold mb-2">Metodologias Ágeis</h3>
+                    <p class="text-sm opacity-80">Divisão de sprints curtas, validação com usuários reais e entrega contínua de melhorias na interface de acessibilidade.</p>
+                </div>
+                <div class="acc-card p-6 rounded-2xl shadow-lg">
+                    <div class="text-3xl text-sky-400 mb-3"><i class="fa-solid fa-clock"></i></div>
+                    <h3 class="text-xl font-bold mb-2">Gestão de Tempo</h3>
+                    <p class="text-sm opacity-80">Utilização de ciclos focados para planejar, prototipar e testar recursos de voz, alto contraste e legendas simultâneas.</p>
+                </div>
+                <div class="acc-card p-6 rounded-2xl shadow-lg">
+                    <div class="text-3xl text-sky-400 mb-3"><i class="fa-solid fa-microchip"></i></div>
+                    <h3 class="text-xl font-bold mb-2">Tecnologia Inclusiva</h3>
+                    <p class="text-sm opacity-80">APIs nativas de síntese de fala (SpeechSynthesis), atributos ARIA robustos, filtros de daltonismo e legendas dinâmicas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 2: SIMULADORES DE ACESSIBILIDADE -->
+        <section id="section-simuladores" class="space-y-6 hidden">
+            <div class="acc-card p-6 md:p-8 rounded-2xl shadow-xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black">Simulador de Barreiras Visuais e Auditivas</h2>
+                        <p class="text-sm opacity-80">Experimente a interface sob a perspectiva de diferentes deficiências para validar a eficácia do seu software.</p>
+                    </div>
+                    <button onclick="resetSimulators()" class="px-4 py-2 border border-[var(--border-color)] rounded-xl font-bold text-xs hover:bg-slate-700 transition">
+                        Restaurar Padrão
+                    </button>
+                </div>
+
+                <!-- Controles do Simulador -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <button onclick="applySimulation('protanopia')" class="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] hover:border-sky-400 transition text-left">
+                        <span class="block font-bold text-sm mb-1"><i class="fa-solid fa-eye text-sky-400"></i> Protanopia</span>
+                        <span class="text-xs opacity-70">Daltonismo (Dificuldade com vermelho/verde)</span>
+                    </button>
+                    <button onclick="applySimulation('deuteranopia')" class="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] hover:border-sky-400 transition text-left">
+                        <span class="block font-bold text-sm mb-1"><i class="fa-solid fa-eye text-sky-400"></i> Deuteranopia</span>
+                        <span class="text-xs opacity-70">Daltonismo comum (Insensibilidade ao verde)</span>
+                    </button>
+                    <button onclick="applySimulation('tritanopia')" class="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] hover:border-sky-400 transition text-left">
+                        <span class="block font-bold text-sm mb-1"><i class="fa-solid fa-eye text-sky-400"></i> Tritanopia</span>
+                        <span class="text-xs opacity-70">Daltonismo raro (Dificuldade azul/amarelo)</span>
+                    </button>
+                    <button onclick="applySimulation('blur')" class="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] hover:border-sky-400 transition text-left">
+                        <span class="block font-bold text-sm mb-1"><i class="fa-solid fa-glasses text-sky-400"></i> Baixa Visão Severa</span>
+                        <span class="text-xs opacity-70">Simulação de desfoque óptico (Blur)</span>
+                    </button>
+                </div>
+
+                <!-- Painel interativo de teste simulado -->
+                <div id="simulation-target-area" class="p-6 rounded-xl border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-color)] transition-all">
+                    <h3 class="text-lg font-bold mb-3 flex items-center justify-between">
+                        <span>Área de Teste Simulada</span>
+                        <span id="active-sim-badge" class="text-xs px-2.5 py-1 bg-sky-500 text-slate-900 rounded-full font-bold">Nenhum Filtro Ativo</span>
+                    </h3>
+                    <p class="text-sm opacity-90 mb-4">
+                        Observe como cores e contrastes mudam ao ativar os filtros acima. Isso demonstra a importância de não utilizar <em>apenas cores</em> para transmitir informações críticas no seu app.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <div class="px-4 py-3 rounded-lg bg-red-600 text-white font-bold text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Erro Crítico
+                        </div>
+                        <div class="px-4 py-3 rounded-lg bg-green-600 text-white font-bold text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-check"></i> Sucesso / Aprovado
+                        </div>
+                        <div class="px-4 py-3 rounded-lg bg-sky-600 text-white font-bold text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-info"></i> Informação Geral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulador de Surdez e Legendas -->
+            <div class="acc-card p-6 md:p-8 rounded-2xl shadow-xl">
+                <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-ear-deaf text-sky-400"></i> Simulador de Surdez e Alertas Visuais
+                </h3>
+                <p class="text-sm opacity-80 mb-4">Dispositivos para surdos substituem alertas sonoros por vibrações e legendas automáticas em tempo real.</p>
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <button onclick="triggerVisualAlert()" class="px-4 py-2 rounded-xl bg-sky-500 text-slate-900 font-bold text-sm">
+                        Simular Alerta Sonoro do Sistema
+                    </button>
+                </div>
+                <div id="visual-caption-box" class="p-4 rounded-xl bg-slate-900 text-yellow-300 font-mono text-sm border border-yellow-500/40 hidden">
+                    💬 <span id="caption-text">Alerta detectado: Notificação importante recebida no sistema.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 3: CADASTRO MULTI-ACESSÍVEL -->
+        <section id="section-cadastro" class="space-y-6 hidden">
+            <div class="acc-card p-6 md:p-8 rounded-2xl shadow-xl max-w-2xl mx-auto">
+                <div class="border-b border-[var(--border-color)] pb-4 mb-6">
+                    <h2 class="text-2xl font-black flex items-center gap-3">
+                        <i class="fa-solid fa-user-plus text-sky-400" aria-hidden="true"></i> Cadastro Multi-Acessível
+                    </h2>
+                    <p class="text-sm opacity-80 mt-1">Desenvolvido com suporte a leitor de voz, foco ampliado e alto contraste.</p>
+                </div>
+
+                <form id="accessible-form" onsubmit="handleRegistration(event)" novalidate class="space-y-6">
+                    <div class="space-y-2">
+                        <label for="cad-nome" class="block font-bold text-base">
+                            Nome Completo <span class="text-red-400" aria-hidden="true">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="cad-nome" 
+                            required 
+                            aria-required="true"
+                            onfocus="speakText('Campo Nome Completo. Digite seu nome.')"
+                            class="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-color)] text-base"
+                            placeholder="Ex: Ana Souza"
+                        >
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="cad-email" class="block font-bold text-base">
+                            E-mail de Contato <span class="text-red-400" aria-hidden="true">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            id="cad-email" 
+                            required 
+                            aria-required="true"
+                            onfocus="speakText('Campo E-mail de Contato. Digite seu e-mail.')"
+                            class="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-color)] text-base"
+                            placeholder="ana@exemplo.com"
+                        >
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="cad-deficiencia" class="block font-bold text-base">
+                            Necessidade Específica Principal
+                        </label>
+                        <select 
+                            id="cad-deficiencia" 
+                            onfocus="speakText('Necessidade Específica Principal. Selecione sua categoria.')"
+                            class="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] text-[var(--text-color)] text-base"
+                        >
+                            <option value="nenhuma">Nenhuma / Outra</option>
+                            <option value="visual">Deficiência Visual / Cegueira</option>
+                            <option value="baixa-visao">Baixa Visão</option>
+                            <option value="auditiva">Deficiência Auditiva / Surdez</option>
+                            <option value="daltonismo">Daltonismo</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <input 
+                            type="checkbox" 
+                            id="cad-termos" 
+                            required 
+                            aria-required="true"
+                            class="w-6 h-6 mt-1 accent-sky-500 cursor-pointer"
+                            onfocus="speakText('Aceitar termos de acessibilidade e privacidade.')"
+                        >
+                        <label for="cad-termos" class="text-base cursor-pointer">
+                            Concordo com as diretrizes de inclusão e privacidade de dados. <span class="text-red-400">*</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-2">
+                        <button 
+                            type="submit" 
+                            class="w-full py-4 rounded-xl font-bold text-base bg-sky-500 text-slate-900 shadow-lg hover:opacity-90 transition flex items-center justify-center gap-2"
+                        >
+                            <i class="fa-solid fa-check-circle"></i> Concluir Cadastro Inclusivo
+                        </button>
+                    </div>
+                </form>
+
+                <div id="reg-success" class="hidden mt-6 p-4 rounded-xl bg-emerald-900 border border-emerald-400 text-white text-center font-bold">
+                    🎉 Cadastro realizado com sucesso e validado pelas diretrizes de acessibilidade!
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO 4: KANBAN ÁGIL INTERATIVO -->
+        <section id="section-kanban" class="space-y-6 hidden">
+            <div class="acc-card p-6 md:p-8 rounded-2xl shadow-xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black">Painel Kanban Ágil &bull; Hackathon</h2>
+                        <p class="text-sm opacity-85">Gerencie as tarefas do projeto, sprints e testes com usuários com deficiência.</p>
+                    </div>
+                    <button onclick="openNewTaskModal()" class="px-4 py-2 bg-sky-500 text-slate-900 rounded-xl font-bold text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Nova Tarefa Ágil
+                    </button>
+                </div>
+
+                <!-- Kanban Columns -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Backlog -->
+                    <div class="acc-card p-4 rounded-xl flex flex-col min-h-[300px]">
+                        <h3 class="font-bold text-sm mb-3 pb-2 border-b border-[var(--border-color)] flex items-center justify-between">
+                            <span>📋 Backlog</span>
+                            <span id="count-backlog" class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">0</span>
+                        </h3>
+                        <div id="col-backlog" class="flex-grow space-y-3" ondragover="allowDrop(event)" ondrop="dropTask(event, 'backlog')"></div>
+                    </div>
+
+                    <!-- Em Desenvolvimento -->
+                    <div class="acc-card p-4 rounded-xl flex flex-col min-h-[300px]">
+                        <h3 class="font-bold text-sm mb-3 pb-2 border-b border-[var(--border-color)] flex items-center justify-between">
+                            <span>⚡ Em Desenvolvimento</span>
+                            <span id="count-dev" class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">0</span>
+                        </h3>
+                        <div id="col-dev" class="flex-grow space-y-3" ondragover="allowDrop(event)" ondrop="dropTask(event, 'dev')"></div>
+                    </div>
+
+                    <!-- Testado por Usuários -->
+                    <div class="acc-card p-4 rounded-xl flex flex-col min-h-[300px]">
+                        <h3 class="font-bold text-sm mb-3 pb-2 border-b border-[var(--border-color)] flex items-center justify-between">
+                            <span>👥 Testes de Acessibilidade</span>
+                            <span id="count-test" class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">0</span>
+                        </h3>
+                        <div id="col-test" class="flex-grow space-y-3" ondragover="allowDrop(event)" ondrop="dropTask(event, 'test')"></div>
+                    </div>
+
+                    <!-- Concluído -->
+                    <div class="acc-card p-4 rounded-xl flex flex-col min-h-[300px]">
+                        <h3 class="font-bold text-sm mb-3 pb-2 border-b border-[var(--border-color)] flex items-center justify-between">
+                            <span>✅ Concluído</span>
+                            <span id="count-done" class="px-2 py-0.5 rounded-full bg-slate-700 text-xs">0</span>
+                        </h3>
+                        <div id="col-done" class="flex-grow space-y-3" ondragover="allowDrop(event)" ondrop="dropTask(event, 'done')"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Rodapé -->
+    <footer role="contentinfo" class="w-full border-t border-[var(--border-color)] bg-[var(--card-bg)] py-4 px-4 text-center text-xs opacity-80">
+        <p>Painel de Soluções Inclusivas &bull; Desenvolvido para o Hackathon de Tecnologia & Acessibilidade WCAG 2.1.</p>
+    </footer>
+
+    <!-- Script Principal de Lógica, Síntese de Voz e Kanban -->
+    <script>
+        // Configurações Globais
+        let speechEnabled = false;
+        let currentThemeIndex = 0;
+        const themes = ['dark', 'light', 'high-contrast'];
+        const themeNames = {'dark': 'Escuro', 'light': 'Claro', 'high-contrast': 'Alto Contraste'};
+
+        // Inicializador de Síntese de Voz Nativa
+        function speakText(text) {
+            if (!speechEnabled) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'pt-BR';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+                document.getElementById('sr-announcer').innerText = text;
+            }
+        }
+
+        function toggleSpeech() {
+            speechEnabled = !speechEnabled;
+            const btn = document.getElementById('btn-speech');
+            const statusSpan = document.getElementById('speech-status');
+            if (speechEnabled) {
+                btn.setAttribute('aria-pressed', 'true');
+                statusSpan.innerText = 'Voz: Ligada';
+                speakText('Leitor de voz ativado com sucesso.');
+            } else {
+                btn.setAttribute('aria-pressed', 'false');
+                statusSpan.innerText = 'Voz: Desligada';
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function toggleTheme() {
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            const theme = themes[currentThemeIndex];
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('theme-name').innerText = themeNames[theme];
+            speakText(`Tema alterado para ${themeNames[theme]}`);
+        }
+
+        function changeFontSize(size) {
+            document.documentElement.setAttribute('data-font', size);
+            speakText(`Tamanho de fonte alterado para ${size}`);
+        }
+
+        // Navegação por Abas
+        function switchTab(tabId) {
+            ['missao', 'simuladores', 'cadastro', 'kanban'].forEach(id => {
+                document.getElementById(`section-${id}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${id}`);
+                btn.classList.remove('bg-sky-500', 'text-slate-900');
+                btn.classList.add('bg-[var(--bg-color)]', 'border', 'border-[var(--border-color)]');
+            });
+
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('bg-sky-500', 'text-slate-900');
+            activeBtn.classList.remove('bg-[var(--bg-color)]', 'border', 'border-[var(--border-color)]');
+            
+            speakText(`Navegou para a seção ${tabId}`);
+        }
+
+        // Lógica de Simuladores de Daltonismo e Visão
+        function applySimulation(type) {
+            const target = document.getElementById('simulation-target-area');
+            const badge = document.getElementById('active-sim-badge');
+            
+            target.className = 'p-6 rounded-xl border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-color)] transition-all';
+            
+            if (type === 'protanopia') {
+                target.classList.add('simulate-protanopia');
+                badge.innerText = 'Filtro Ativo: Protanopia';
+                speakText('Simulação de protanopia ativada.');
+            } else if (type === 'deuteranopia') {
+                target.classList.add('simulate-deuteranopia');
+                badge.innerText = 'Filtro Ativo: Deuteranopia';
+                speakText('Simulação de deuteranopia ativada.');
+            } else if (type === 'tritanopia') {
+                target.classList.add('simulate-tritanopia');
+                badge.innerText = 'Filtro Ativo: Tritanopia';
+                speakText('Simulação de tritanopia ativada.');
+            } else if (type === 'blur') {
+                target.classList.add('simulate-blur');
+                badge.innerText = 'Filtro Ativo: Baixa Visão (Desfoque)';
+                speakText('Simulação de baixa visão ativada.');
+            }
+        }
+
+        function resetSimulators() {
+            const target = document.getElementById('simulation-target-area');
+            target.className = 'p-6 rounded-xl border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-color)] transition-all';
+            document.getElementById('active-sim-badge').innerText = 'Nenhum Filtro Ativo';
+            speakText('Filtros de simulação limpos.');
+        }
+
+        function triggerVisualAlert() {
+            const box = document.getElementById('visual-caption-box');
+            box.classList.remove('hidden');
+            speakText('Alerta visual ativado para deficientes auditivos.');
+            setTimeout(() => {
+                box.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Validação de Cadastro Multi-Acessível
+        function handleRegistration(event) {
+            event.preventDefault();
+            const nome = document.getElementById('cad-nome').value.trim();
+            if (nome.length < 2) {
+                speakText('Por favor, preencha o nome corretamente.');
+                return;
+            }
+            document.getElementById('accessible-form').classList.add('hidden');
+            document.getElementById('reg-success').classList.remove('hidden');
+            speakText('Cadastro realizado com sucesso!');
+        }
+
+        // Kanban Ágil State & Drag-and-Drop
+        let tasks = [
+            { id: '1', title: 'Implementar leitor de voz nativo', col: 'done', priority: 'Alta' },
+            { id: '2', title: 'Testar contraste com protanopia', col: 'test', priority: 'Média' },
+            { id: '3', title: 'Adicionar legendas automáticas', col: 'dev', priority: 'Alta' },
+            { id: '4', title: 'Pesquisa com usuários com deficiência', col: 'backlog', priority: 'Baixa' }
+        ];
+
+        function renderKanban() {
+            ['backlog', 'dev', 'test', 'done'].forEach(col => {
+                document.getElementById(`col-${col}`).innerHTML = '';
+            });
+
+            let counts = { backlog: 0, dev: 0, test: 0, done: 0 };
+
+            tasks.forEach(task => {
+                counts[task.col]++;
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] shadow-sm cursor-grab flex items-center justify-between text-xs';
+                card.draggable = true;
+                card.id = `task-${task.id}`;
+                card.ondragstart = (e) => e.dataTransfer.setData('text/plain', task.id);
+                
+                card.innerHTML = `
+                    <span>${task.title}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-sky-500/20 text-sky-400 font-bold">${task.priority}</span>
+                `;
+                document.getElementById(`col-${task.col}`).appendChild(card);
+            });
+
+            document.getElementById('count-backlog').innerText = counts.backlog;
+            document.getElementById('count-dev').innerText = counts.dev;
+            document.getElementById('count-test').innerText = counts.test;
+            document.getElementById('count-done').innerText = counts.done;
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function dropTask(event, targetCol) {
+            event.preventDefault();
+            const taskId = event.dataTransfer.getData('text/plain');
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.col = targetCol;
+                renderKanban();
+                speakText(`Tarefa movida para ${targetCol}`);
+            }
+        }
+
+        function openNewTaskModal() {
+            const title = prompt("Digite o título da nova tarefa ágil:");
+            if (title) {
+                const newTask = {
+                    id: Date.now().toString(),
+                    title: title,
+                    col: 'backlog',
+                    priority: 'Média'
+                };
+                tasks.push(newTask);
+                renderKanban();
+                speakText('Nova tarefa adicionada ao backlog.');
+            }
+        }
+
+        // Inicialização do Kanban ao carregar
+        window.onload = () => {
+            renderKanban();
+        };
+    </script>
+</body>
+</html>
